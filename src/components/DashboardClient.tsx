@@ -36,9 +36,12 @@ export function DashboardClient({}: DashboardClientProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [error, setError] = useState("");
   const [now, setNow] = useState(Date.now());
-  const username = getCurrentUsername() || "Usuario";
+  const [username, setUsername] = useState("Usuario");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    setUsername(getCurrentUsername() || "Usuario");
     setLoads(getLoads());
     setTasks(getTasks());
     const timer = setInterval(() => {

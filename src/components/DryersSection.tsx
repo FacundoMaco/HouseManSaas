@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Timer } from "@/components/Timer";
@@ -16,7 +16,12 @@ const MIN_DURATION = 40;
 const STEP_MINUTES = 4;
 
 export function DryersSection({ currentTime, onUpdate }: DryersSectionProps) {
-  const loads = getLoads();
+  const [loads, setLoads] = useState<Load[]>([]);
+
+  useEffect(() => {
+    setLoads(getLoads());
+  }, [currentTime]);
+
   const dryingLoads = loads.filter((l) => l.status === "drying" && l.dryer_number !== null);
 
   const dryer1Load = dryingLoads.find((l) => l.dryer_number === 1);
@@ -26,7 +31,8 @@ export function DryersSection({ currentTime, onUpdate }: DryersSectionProps) {
     const key = `dryer_${dryerNumber}_duration`;
     if (typeof window === "undefined") return;
     localStorage.setItem(key, duration.toString());
-    onUpdate();
+    setLoads(getLoads()); // Actualizar loads localmente
+    onUpdate(); // Notificar al padre
   };
 
   const increaseDuration = (dryerNumber: 1 | 2) => {

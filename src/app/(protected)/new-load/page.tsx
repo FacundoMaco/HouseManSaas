@@ -1,18 +1,24 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { NewLoadForm } from "@/components/NewLoadForm";
 import { isAuthenticated } from "@/lib/auth-simple";
 
 export default function NewLoadPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (!isAuthenticated()) {
       router.push("/login");
     }
   }, [router]);
+
+  if (!mounted) {
+    return null;
+  }
 
   if (!isAuthenticated()) {
     return null;
