@@ -46,6 +46,20 @@ export function updateLoad(id: string, updates: Partial<Load>): Load | null {
   return loads[index];
 }
 
+// Obtener qué secadora está disponible (1 o 2)
+export function getAvailableDryer(): 1 | 2 {
+  const loads = getLoads();
+  const dryingLoads = loads.filter(
+    (l) => l.status === "drying" && l.dryer_number !== null
+  );
+  const usedDryers = new Set(dryingLoads.map((l) => l.dryer_number));
+  
+  if (!usedDryers.has(1)) return 1;
+  if (!usedDryers.has(2)) return 2;
+  // Si ambas están ocupadas, retornar 1 por defecto (el usuario decidirá)
+  return 1;
+}
+
 // Tasks
 export function getTasks(): Task[] {
   if (typeof window === "undefined") return [];

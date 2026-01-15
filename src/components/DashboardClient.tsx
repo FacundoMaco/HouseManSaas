@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Load, Task } from "@/lib/types";
-import { getLoads, updateLoad, getTasks, updateTask } from "@/lib/storage";
+import { getLoads, updateLoad, getTasks, updateTask, getAvailableDryer } from "@/lib/storage";
 import { logout, getCurrentUsername } from "@/lib/auth-simple";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Progress } from "@/components/ui/Progress";
+import { Timer } from "@/components/Timer";
 
 type DashboardClientProps = {};
 
@@ -20,6 +21,12 @@ const STATUS_LABELS: Record<Load["status"], string> = {
   washing: "Lavando",
   drying: "Secando",
   done: "Finalizado",
+};
+
+const LOAD_TYPE_LABELS: Record<Load["type"], string> = {
+  towels: "5 Toallas",
+  pillowcases_towels: "Pillowcases + Toallas",
+  towels_feet: "Toallas + Toallas pies",
 };
 
 export function DashboardClient({}: DashboardClientProps) {
@@ -63,13 +70,30 @@ export function DashboardClient({}: DashboardClientProps) {
 
     let updates: Partial<Load> = {};
     if (action === "start_washer" && load.status === "waiting") {
+      // Verificar que la lavadora no esté ocupada
+      const washingLoad = loads.find((l) => l.status === "washing");
+      if (washingLoad) {
+        setError("La lavadora ya está en uso. Espera a que termine.");
+        return;
+      }
       updates = {
         washer_started_at: new Date().toISOString(),
         status: "washing",
       };
     } else if (action === "start_dryer" && load.status === "washing") {
+      // Asignar secadora disponible
+      const availableDryer = getAvailableDryer();
+      const dryingLoads = loads.filter((l) => l.status === "drying" && l.dryer_number !== null);
+      const usedDryers = new Set(dryingLoads.map((l) => l.dryer_number));
+      
+      if (usedDryers.has(1) && usedDryers.has(2)) {
+        setError("Ambas secadoras están ocupadas. Espera a que una termine.");
+        return;
+      }
+      
       updates = {
         dryer_started_at: new Date().toISOString(),
+        dryer_number: availableDryer,
         status: "drying",
       };
     } else if (action === "mark_done" && load.status === "drying") {
@@ -99,22 +123,16 @@ export function DashboardClient({}: DashboardClientProps) {
     }
   };
 
-  const formatRemaining = (load: Load) => {
-    if (load.status === "waiting") {
-      return { label: "Sin iniciar", ready: true };
-    }
+  const isReady = (load: Load): boolean => {
+    if (load.status === "waiting") return true;
     const startedAt =
       load.status === "washing" ? load.washer_started_at : load.dryer_started_at;
     const duration =
       load.status === "washing" ? load.washer_duration : load.dryer_duration;
-    if (!startedAt) return { label: "Sin iniciar", ready: true };
+    if (!startedAt) return true;
 
     const endTime = new Date(startedAt).getTime() + duration * 60 * 1000;
-    const remaining = Math.ceil((endTime - now) / 60000);
-    if (remaining <= 0) {
-      return { label: "Listo", ready: true };
-    }
-    return { label: `${remaining} min`, ready: false };
+    return now >= endTime;
   };
 
   const getAction = (load: Load) => {
@@ -165,8 +183,8 @@ export function DashboardClient({}: DashboardClientProps) {
         {activeLoads.length ? (
           <div className="space-y-3">
             {activeLoads.map((load) => {
-              const remaining = formatRemaining(load);
               const action = getAction(load);
+              const ready = isReady(load);
               const tone =
                 load.status === "done"
                   ? "success"
@@ -174,30 +192,43 @@ export function DashboardClient({}: DashboardClientProps) {
                   ? "warning"
                   : "neutral";
 
+              const startedAt =
+                load.status === "washing" ? load.washer_started_at : load.dryer_started_at;
+              const duration =
+                load.status === "washing" ? load.washer_duration : load.dryer_duration;
+
               return (
                 <Card key={load.id} className="space-y-3">
                   <div className="flex items-start justify-between">
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm font-semibold text-zinc-900">
-                        {load.type === "towels"
-                          ? "Toallas"
-                          : load.type === "sheets"
-                          ? "Sábanas"
-                          : "Mixta"}
+                        {LOAD_TYPE_LABELS[load.type]}
                       </p>
                       <p className="text-xs text-zinc-500">
-                        {load.weight_lbs} lb · {load.notes ?? "Sin notas"}
+                        {load.status === "drying" && load.dryer_number
+                          ? `Secadora ${load.dryer_number} · `
+                          : ""}
+                        {load.notes ?? "Sin notas"}
                       </p>
                     </div>
                     <Badge tone={tone}>{STATUS_LABELS[load.status]}</Badge>
                   </div>
-                  <div className="flex items-center justify-between text-sm text-zinc-600">
-                    <span>Restante: {remaining.label}</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-zinc-500">
+                        {load.status === "washing" ? "Lavadora:" : "Secadora:"}
+                      </span>
+                      <Timer
+                        startedAt={startedAt}
+                        durationMinutes={duration}
+                        currentTime={now}
+                      />
+                    </div>
                     {action ? (
                       <Button
                         variant="secondary"
                         onClick={() => handleLoadAction(load.id, action.action)}
-                        disabled={!remaining.ready}
+                        disabled={!ready}
                       >
                         {action.label}
                       </Button>

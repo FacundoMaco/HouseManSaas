@@ -2,17 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createLoad } from "@/lib/storage";
+import { createLoad, getLoads } from "@/lib/storage";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { Input } from "@/components/ui/Input";
 import type { LoadType } from "@/lib/types";
+
+const LOAD_TYPE_LABELS: Record<LoadType, string> = {
+  towels: "5 Toallas",
+  pillowcases_towels: "Pillowcases + Toallas mano/cara",
+  towels_feet: "Toallas + Toallas pies (⚠️ puede no escurrir bien)",
+};
 
 export function NewLoadForm() {
   const router = useRouter();
   const [type, setType] = useState<LoadType>("towels");
-  const [weight, setWeight] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -22,9 +27,11 @@ export function NewLoadForm() {
     setError("");
     setLoading(true);
 
-    const weightNum = Number(weight);
-    if (!weightNum || weightNum <= 0) {
-      setError("El peso debe ser mayor a 0.");
+    // Verificar que la lavadora no esté ocupada
+    const loads = getLoads();
+    const washingLoad = loads.find((l) => l.status === "washing");
+    if (washingLoad) {
+      setError("La lavadora ya está en uso. Espera a que termine.");
       setLoading(false);
       return;
     }
@@ -32,12 +39,12 @@ export function NewLoadForm() {
     try {
       createLoad({
         type,
-        weight_lbs: weightNum,
         notes: notes.trim() || null,
         washer_started_at: new Date().toISOString(),
         washer_duration: 35,
         dryer_started_at: null,
-        dryer_duration: 62,
+        dryer_duration: 42, // 40-45 min default, usar 42
+        dryer_number: null,
         status: "washing",
       });
 
@@ -59,31 +66,26 @@ export function NewLoadForm() {
       </div>
       <form className="space-y-4" onSubmit={onSubmit}>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-zinc-700">Tipo</label>
+          <label className="text-sm font-medium text-zinc-700">Tipo de carga</label>
           <Select value={type} onChange={(e) => setType(e.target.value as LoadType)}>
-            <option value="towels">Toallas</option>
-            <option value="sheets">Sábanas</option>
-            <option value="mixed">Mixta</option>
+            {Object.entries(LOAD_TYPE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </Select>
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-zinc-700">Peso (lb)</label>
-          <Input
-            type="number"
-            min="1"
-            step="1"
-            value={weight}
-            onChange={(event) => setWeight(event.target.value)}
-            placeholder="Ej. 20"
-            required
-          />
+          {type === "towels_feet" && (
+            <p className="text-xs text-amber-600">
+              ⚠️ Advertencia: Combinar toallas con toallas para pies puede generar que no se escurran bien debido a que ambos tipos son de materiales gruesos.
+            </p>
+          )}
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-zinc-700">Notas</label>
           <Input
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            placeholder="Opcional"
+            placeholder="Opcional - Ej: cantidad específica, detalles, etc."
           />
         </div>
         {error ? (
