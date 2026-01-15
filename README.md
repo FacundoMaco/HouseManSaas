@@ -1,36 +1,114 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HouseMen SaaS - MVP
 
-## Getting Started
+SaaS web app minimalista para gestionar cargas de lavandería y tareas diarias de personal de hotel.
 
-First, run the development server:
+## Stack Tecnológico
+
+- **Next.js 15** (App Router)
+- **TypeScript**
+- **Tailwind CSS**
+- **Supabase** (PostgreSQL)
+- **Vercel** (Deployment)
+
+## Características
+
+- ✅ Autenticación simple con usuarios y contraseñas
+- ✅ Dashboard con cargas de lavandería activas
+- ✅ Gestión de tareas diarias con checklist
+- ✅ Timers persistentes para lavadora/secadora
+- ✅ UI mobile-first y PWA-ready
+- ✅ Diseño minimalista y operacional
+
+## Configuración Inicial
+
+### 1. Variables de Entorno
+
+Crea un archivo `.env.local` en la raíz del proyecto:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=tu_url_de_supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key_de_supabase
+SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key_de_supabase
+SESSION_SECRET=una_cadena_secreta_aleatoria
+```
+
+### 2. Base de Datos
+
+Ejecuta el script SQL en tu proyecto de Supabase:
+
+```bash
+# El archivo está en: supabase/schema.sql
+```
+
+Este script crea las tablas:
+- `users` - Usuarios del sistema
+- `loads` - Cargas de lavandería
+- `tasks` - Tareas diarias
+
+### 3. Crear Primer Usuario
+
+Necesitas crear un usuario manualmente en Supabase. Puedes usar este script Node.js temporal:
+
+```bash
+node -e "
+const bcrypt = require('bcryptjs');
+const hash = bcrypt.hashSync('tu_contraseña', 10);
+console.log('INSERT INTO users (username, password) VALUES (\\'admin\\', \\'' + hash + '\\');');
+"
+```
+
+Luego ejecuta el INSERT en Supabase SQL Editor.
+
+### 4. Instalar Dependencias
+
+```bash
+npm install
+```
+
+### 5. Ejecutar Servidor de Desarrollo
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Estructura del Proyecto
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/
+│   ├── (protected)/      # Rutas protegidas
+│   │   ├── dashboard/    # Dashboard principal
+│   │   └── new-load/     # Crear nueva carga
+│   ├── api/              # API routes
+│   │   ├── login/        # Autenticación
+│   │   ├── loads/        # CRUD de cargas
+│   │   └── tasks/        # CRUD de tareas
+│   └── login/            # Página de login
+├── components/
+│   ├── ui/               # Componentes UI base
+│   ├── DashboardClient.tsx
+│   ├── LoginForm.tsx
+│   └── NewLoadForm.tsx
+└── lib/
+    ├── auth.ts           # Helpers de autenticación
+    ├── session.ts        # Gestión de sesiones
+    └── supabase*.ts      # Clientes de Supabase
+```
 
-## Learn More
+## Rutas Principales
 
-To learn more about Next.js, take a look at the following resources:
+- `/login` - Página de inicio de sesión
+- `/dashboard` - Dashboard principal (protegida)
+- `/new-load` - Crear nueva carga (protegida)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment en Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Conecta tu repositorio a Vercel
+2. Configura las variables de entorno en Vercel
+3. Deploy automático en cada push a `main`
 
-## Deploy on Vercel
+## Licencia
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
