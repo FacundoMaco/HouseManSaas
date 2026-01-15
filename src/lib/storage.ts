@@ -60,6 +60,14 @@ export function getAvailableDryer(): 1 | 2 {
   return 1;
 }
 
+// Obtener duración configurada para una secadora
+export function getDryerDuration(dryerNumber: 1 | 2): number {
+  if (typeof window === "undefined") return 40;
+  const key = `dryer_${dryerNumber}_duration`;
+  const stored = localStorage.getItem(key);
+  return stored ? parseInt(stored, 10) : 40;
+}
+
 // Tasks
 export function getTasks(): Task[] {
   if (typeof window === "undefined") return [];

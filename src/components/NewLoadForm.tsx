@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createLoad, getLoads } from "@/lib/storage";
+import { createLoad, getLoads, getDryerDuration } from "@/lib/storage";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
@@ -43,7 +43,7 @@ export function NewLoadForm() {
         washer_started_at: new Date().toISOString(),
         washer_duration: 35,
         dryer_started_at: null,
-        dryer_duration: 42, // 40-45 min default, usar 42
+        dryer_duration: 40, // Se actualizará cuando se inicie la secadora
         dryer_number: null,
         status: "washing",
       });

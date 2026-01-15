@@ -4,13 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Load, Task } from "@/lib/types";
-import { getLoads, updateLoad, getTasks, updateTask, getAvailableDryer } from "@/lib/storage";
+import { getLoads, updateLoad, getTasks, updateTask, getAvailableDryer, getDryerDuration } from "@/lib/storage";
 import { logout, getCurrentUsername } from "@/lib/auth-simple";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Progress } from "@/components/ui/Progress";
 import { Timer } from "@/components/Timer";
+import { DryersSection } from "@/components/DryersSection";
 
 type DashboardClientProps = {};
 
@@ -91,9 +92,13 @@ export function DashboardClient({}: DashboardClientProps) {
         return;
       }
       
+      // Usar el tiempo configurado para esta secadora
+      const dryerDuration = getDryerDuration(availableDryer);
+      
       updates = {
         dryer_started_at: new Date().toISOString(),
         dryer_number: availableDryer,
+        dryer_duration: dryerDuration,
         status: "drying",
       };
     } else if (action === "mark_done" && load.status === "drying") {
@@ -246,6 +251,8 @@ export function DashboardClient({}: DashboardClientProps) {
           </Card>
         )}
       </section>
+
+      <DryersSection currentTime={now} onUpdate={() => setLoads(getLoads())} />
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
