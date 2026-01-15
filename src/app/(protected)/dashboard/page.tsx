@@ -4,7 +4,7 @@ import { DashboardClient } from "@/components/DashboardClient";
 import type { Load, Task } from "@/lib/types";
 
 export default async function DashboardPage() {
-  const session = getSessionUser();
+  const session = await getSessionUser();
   if (!session) {
     return null;
   }

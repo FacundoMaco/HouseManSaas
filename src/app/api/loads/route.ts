@@ -5,7 +5,7 @@ import { getSessionUser } from "@/lib/auth";
 const VALID_TYPES = ["towels", "sheets", "mixed"] as const;
 
 export async function POST(request: Request) {
-  const session = getSessionUser();
+  const session = await getSessionUser();
   if (!session) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }

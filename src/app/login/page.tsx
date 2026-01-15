@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/LoginForm";
 import { getSessionUser } from "@/lib/auth";
 
-export default function LoginPage() {
-  const session = getSessionUser();
+export default async function LoginPage() {
+  const session = await getSessionUser();
   if (session) {
     redirect("/dashboard");
   }

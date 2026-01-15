@@ -12,6 +12,8 @@ if (!secret) {
   throw new Error("Falta la variable SESSION_SECRET.");
 }
 
+const SESSION_SECRET: string = secret;
+
 function base64UrlEncode(value: string) {
   return Buffer.from(value).toString("base64url");
 }
@@ -21,7 +23,7 @@ function base64UrlDecode(value: string) {
 }
 
 function sign(value: string) {
-  return crypto.createHmac("sha256", secret).update(value).digest("base64url");
+  return crypto.createHmac("sha256", SESSION_SECRET).update(value).digest("base64url");
 }
 
 export function createSessionToken(payload: Omit<SessionPayload, "exp">) {

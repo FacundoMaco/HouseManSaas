@@ -4,13 +4,14 @@ import { getSessionUser } from "@/lib/auth";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = getSessionUser();
+  const session = await getSessionUser();
   if (!session) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
 
+  const { id } = await params;
   const body = (await request.json().catch(() => ({}))) as {
     completed?: boolean;
   };
@@ -25,7 +26,7 @@ export async function PATCH(
   const { data, error } = await supabaseServer
     .from("tasks")
     .update({ completed: body.completed })
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("user_id", session.userId)
     .select("*")
     .single();

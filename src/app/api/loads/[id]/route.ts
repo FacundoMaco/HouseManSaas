@@ -6,13 +6,14 @@ type LoadAction = "start_washer" | "start_dryer" | "mark_done";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = getSessionUser();
+  const session = await getSessionUser();
   if (!session) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
 
+  const { id } = await params;
   const body = (await request.json().catch(() => ({}))) as {
     action?: LoadAction;
   };
@@ -24,7 +25,7 @@ export async function PATCH(
   const { data: load, error } = await supabaseServer
     .from("loads")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("user_id", session.userId)
     .maybeSingle();
 
@@ -58,7 +59,7 @@ export async function PATCH(
   const { data: updated, error: updateError } = await supabaseServer
     .from("loads")
     .update(updates)
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("user_id", session.userId)
     .select("*")
     .single();
