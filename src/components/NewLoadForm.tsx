@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createLoad } from "@/lib/storage";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -16,32 +17,34 @@ export function NewLoadForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
     setLoading(true);
 
-    try {
-      const response = await fetch("/api/loads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type,
-          weight_lbs: Number(weight),
-          notes: notes.trim() ? notes.trim() : null,
-        }),
-      });
+    const weightNum = Number(weight);
+    if (!weightNum || weightNum <= 0) {
+      setError("El peso debe ser mayor a 0.");
+      setLoading(false);
+      return;
+    }
 
-      if (!response.ok) {
-        const data = (await response.json()) as { error?: string };
-        throw new Error(data.error ?? "No se pudo crear la carga.");
-      }
+    try {
+      createLoad({
+        type,
+        weight_lbs: weightNum,
+        notes: notes.trim() || null,
+        washer_started_at: new Date().toISOString(),
+        washer_duration: 35,
+        dryer_started_at: null,
+        dryer_duration: 62,
+        status: "washing",
+      });
 
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado.");
-    } finally {
       setLoading(false);
     }
   };

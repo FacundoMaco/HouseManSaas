@@ -4,16 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Load, Task } from "@/lib/types";
+import { getLoads, updateLoad, getTasks, updateTask } from "@/lib/storage";
+import { logout, getCurrentUsername } from "@/lib/auth-simple";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Progress } from "@/components/ui/Progress";
 
-type DashboardClientProps = {
-  initialLoads: Load[];
-  initialTasks: Task[];
-  username: string;
-};
+type DashboardClientProps = {};
 
 type LoadAction = "start_washer" | "start_dryer" | "mark_done";
 
@@ -24,19 +22,22 @@ const STATUS_LABELS: Record<Load["status"], string> = {
   done: "Finalizado",
 };
 
-export function DashboardClient({
-  initialLoads,
-  initialTasks,
-  username,
-}: DashboardClientProps) {
+export function DashboardClient({}: DashboardClientProps) {
   const router = useRouter();
-  const [loads, setLoads] = useState<Load[]>(initialLoads);
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [loads, setLoads] = useState<Load[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [error, setError] = useState("");
   const [now, setNow] = useState(Date.now());
+  const username = getCurrentUsername() || "Usuario";
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 30000);
+    setLoads(getLoads());
+    setTasks(getTasks());
+    const timer = setInterval(() => {
+      setNow(Date.now());
+      setLoads(getLoads());
+      setTasks(getTasks());
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -46,51 +47,55 @@ export function DashboardClient({
     return Math.round((completed / tasks.length) * 100);
   }, [tasks]);
 
-  const handleLogout = async () => {
-    await fetch("/api/logout", { method: "POST" });
+  const handleLogout = () => {
+    logout();
     router.push("/login");
     router.refresh();
   };
 
-  const handleLoadAction = async (loadId: string, action: LoadAction) => {
+  const handleLoadAction = (loadId: string, action: LoadAction) => {
     setError("");
-    try {
-      const response = await fetch(`/api/loads/${loadId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
-      });
-      if (!response.ok) {
-        const data = (await response.json()) as { error?: string };
-        throw new Error(data.error ?? "No se pudo actualizar la carga.");
-      }
-      const updated = (await response.json()) as { load: Load };
-      setLoads((prev) =>
-        prev.map((load) => (load.id === updated.load.id ? updated.load : load))
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error inesperado.");
+    const load = loads.find((l) => l.id === loadId);
+    if (!load) {
+      setError("Carga no encontrada.");
+      return;
+    }
+
+    let updates: Partial<Load> = {};
+    if (action === "start_washer" && load.status === "waiting") {
+      updates = {
+        washer_started_at: new Date().toISOString(),
+        status: "washing",
+      };
+    } else if (action === "start_dryer" && load.status === "washing") {
+      updates = {
+        dryer_started_at: new Date().toISOString(),
+        status: "drying",
+      };
+    } else if (action === "mark_done" && load.status === "drying") {
+      updates = {
+        status: "done",
+      };
+    } else {
+      setError("Acción no permitida para el estado actual.");
+      return;
+    }
+
+    const updated = updateLoad(loadId, updates);
+    if (updated) {
+      setLoads(getLoads());
+    } else {
+      setError("No se pudo actualizar la carga.");
     }
   };
 
-  const handleTaskToggle = async (task: Task) => {
+  const handleTaskToggle = (task: Task) => {
     setError("");
-    try {
-      const response = await fetch(`/api/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed: !task.completed }),
-      });
-      if (!response.ok) {
-        const data = (await response.json()) as { error?: string };
-        throw new Error(data.error ?? "No se pudo actualizar la tarea.");
-      }
-      const updated = (await response.json()) as { task: Task };
-      setTasks((prev) =>
-        prev.map((item) => (item.id === updated.task.id ? updated.task : item))
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error inesperado.");
+    const updated = updateTask(task.id, { completed: !task.completed });
+    if (updated) {
+      setTasks(getTasks());
+    } else {
+      setError("No se pudo actualizar la tarea.");
     }
   };
 

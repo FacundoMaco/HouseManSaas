@@ -1,14 +1,24 @@
-import { redirect } from "next/navigation";
-import { getSessionUser } from "@/lib/auth";
+"use client";
 
-export default async function ProtectedLayout({
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { isAuthenticated } from "@/lib/auth-simple";
+
+export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSessionUser();
-  if (!session) {
-    redirect("/login");
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push("/login");
+    }
+  }, [router]);
+
+  if (!isAuthenticated()) {
+    return null;
   }
 
   return <>{children}</>;

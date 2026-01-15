@@ -1,6 +1,23 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { NewLoadForm } from "@/components/NewLoadForm";
+import { isAuthenticated } from "@/lib/auth-simple";
 
 export default function NewLoadPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push("/login");
+    }
+  }, [router]);
+
+  if (!isAuthenticated()) {
+    return null;
+  }
+
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-4 py-6">
       <header>

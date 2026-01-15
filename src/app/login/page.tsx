@@ -1,11 +1,21 @@
-import { redirect } from "next/navigation";
-import { LoginForm } from "@/components/LoginForm";
-import { getSessionUser } from "@/lib/auth";
+"use client";
 
-export default async function LoginPage() {
-  const session = await getSessionUser();
-  if (session) {
-    redirect("/dashboard");
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { LoginForm } from "@/components/LoginForm";
+import { isAuthenticated } from "@/lib/auth-simple";
+
+export default function LoginPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      router.push("/dashboard");
+    }
+  }, [router]);
+
+  if (isAuthenticated()) {
+    return null;
   }
 
   return (
