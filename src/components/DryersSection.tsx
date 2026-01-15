@@ -12,7 +12,8 @@ type DryersSectionProps = {
   onUpdate: () => void;
 };
 
-const DRYER_DURATIONS = [40, 44, 48, 52] as const;
+const MIN_DURATION = 40;
+const STEP_MINUTES = 4;
 
 export function DryersSection({ currentTime, onUpdate }: DryersSectionProps) {
   const loads = getLoads();
@@ -30,18 +31,14 @@ export function DryersSection({ currentTime, onUpdate }: DryersSectionProps) {
 
   const increaseDuration = (dryerNumber: 1 | 2) => {
     const current = getDryerDuration(dryerNumber);
-    const currentIndex = DRYER_DURATIONS.indexOf(current as typeof DRYER_DURATIONS[number]);
-    if (currentIndex < DRYER_DURATIONS.length - 1) {
-      const newDuration = DRYER_DURATIONS[currentIndex + 1];
-      setDryerDuration(dryerNumber, newDuration);
-    }
+    const newDuration = current + STEP_MINUTES;
+    setDryerDuration(dryerNumber, newDuration);
   };
 
   const decreaseDuration = (dryerNumber: 1 | 2) => {
     const current = getDryerDuration(dryerNumber);
-    const currentIndex = DRYER_DURATIONS.indexOf(current as typeof DRYER_DURATIONS[number]);
-    if (currentIndex > 0) {
-      const newDuration = DRYER_DURATIONS[currentIndex - 1];
+    if (current > MIN_DURATION) {
+      const newDuration = current - STEP_MINUTES;
       setDryerDuration(dryerNumber, newDuration);
     }
   };
@@ -89,7 +86,7 @@ export function DryersSection({ currentTime, onUpdate }: DryersSectionProps) {
                   variant="ghost"
                   className="h-6 w-6 p-0 text-xs"
                   onClick={() => decreaseDuration(dryerNumber)}
-                  disabled={duration === DRYER_DURATIONS[0]}
+                  disabled={duration <= MIN_DURATION}
                 >
                   −
                 </Button>
@@ -100,7 +97,6 @@ export function DryersSection({ currentTime, onUpdate }: DryersSectionProps) {
                   variant="ghost"
                   className="h-6 w-6 p-0 text-xs"
                   onClick={() => increaseDuration(dryerNumber)}
-                  disabled={duration === DRYER_DURATIONS[DRYER_DURATIONS.length - 1]}
                 >
                   +
                 </Button>
