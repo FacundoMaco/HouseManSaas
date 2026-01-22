@@ -1,22 +1,41 @@
-export type LoadStatus = "waiting" | "washing" | "drying" | "done";
-export type LoadType = "towels" | "pillowcases_towels" | "towels_feet";
+export type UserRole = "frontdesk" | "runner" | "manager";
+export type TaskType = "towels" | "ice" | "trash" | "amenities" | "hallway_check" | "custom";
+export type TaskPriority = "normal" | "urgent";
+export type TaskStatus = "pending" | "in_progress" | "done";
 
-export type Load = {
+export type Profile = {
   id: string;
-  type: LoadType;
-  washer_started_at: string | null;
-  washer_duration: number;
-  dryer_started_at: string | null;
-  dryer_duration: number;
-  dryer_number: 1 | 2 | null; // Qué secadora está usando (1 o 2)
-  status: LoadStatus;
-  notes: string | null;
+  full_name: string;
+  role: UserRole;
+  on_shift: boolean;
   created_at: string;
 };
 
 export type Task = {
   id: string;
-  label: string;
-  completed: boolean;
+  type: TaskType;
+  room: string | null;
+  note: string | null;
+  priority: TaskPriority;
+  status: TaskStatus;
+  assigned_to: string;
+  created_by: string;
+  created_by_name: string | null;
   created_at: string;
+  updated_at: string;
+};
+
+export type MachineType = "washer" | "dryer";
+export type MachineStatus = "idle" | "running" | "done";
+
+export type Machine = {
+  id: string;
+  name: string;
+  type: MachineType;
+  status: MachineStatus;
+  ends_at: string | null;
+  started_by: string | null;
+  started_by_name: string | null;
+  load_type: string | null;
+  updated_at: string;
 };
