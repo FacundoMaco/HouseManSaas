@@ -1,11 +1,21 @@
--- Crear usuario admin
--- Username: admin
--- Password: 123pass
--- 
--- Ejecuta este SQL en el SQL Editor de Supabase
+-- NOTE:
+-- This project uses Supabase Auth (magic link) + `profiles` table.
+-- We do NOT create users manually in a custom `users` table.
+--
+-- To create demo accounts:
+-- 1) Create the Auth users from Supabase Dashboard (Authentication > Users)
+-- 2) Ensure each Auth user has a matching row in `profiles` with the same `id`
+--
+-- This file is intentionally kept as documentation to avoid confusion.
 
-INSERT INTO users (username, password) VALUES (
-  'admin',
-  '$2b$10$59R0Ob0qoyXVMfR0IOn6teTZiJtIQ2gbHh5bziuihm4iv0E.LGJk2'
-)
-ON CONFLICT (username) DO NOTHING;
+-- Example: create a profile for an existing Auth user
+-- (Replace the UUIDs with the real auth.users.id values)
+
+-- INSERT INTO public.profiles (id, full_name, role, on_shift)
+-- VALUES
+--   ('00000000-0000-0000-0000-000000000000', 'Dannish', 'frontdesk', true),
+--   ('11111111-1111-1111-1111-111111111111', 'Facundo', 'runner', true)
+-- ON CONFLICT (id) DO UPDATE
+-- SET full_name = EXCLUDED.full_name,
+--     role = EXCLUDED.role,
+--     on_shift = EXCLUDED.on_shift;
