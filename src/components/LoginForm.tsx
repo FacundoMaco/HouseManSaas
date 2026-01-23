@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
-const CORRECT_PIN = "3007";
+const CORRECT_PIN = "7321";
 const PIN_STORAGE_KEY = "housemen_pin_verified";
 
 export function LoginForm() {
